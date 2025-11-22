@@ -1,0 +1,58 @@
+[versions]
+# --- Phiên bản Android/Kotlin ổn định ---
+agp = "8.7.3"
+kotlin = "2.0.21"
+coreKtx = "1.15.0"  # Đã hạ cấp để không yêu cầu API 36
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+appcompat = "1.7.0"
+material = "1.12.0"
+activity = "1.9.3"  # Đã hạ cấp để không yêu cầu API 36
+constraintlayout = "2.2.0"
+
+# --- Các thư viện chức năng ---
+ksp = "2.0.21-1.0.27"
+hilt = "2.51.1"
+coroutines = "1.9.0"
+glide = "4.16.0"
+sdp = "1.1.1"
+ssp = "1.1.1"
+pdfbox = "2.0.27.0"
+navigationFragment = "2.8.3"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+
+# --- Coroutines ---
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+# --- Hilt ---
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hilt" }
+
+# --- Glide ---
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
+
+# --- SDP & SSP ---
+sdp-android = { module = "com.intuit.sdp:sdp-android", version.ref = "sdp" }
+ssp-android = { module = "com.intuit.ssp:ssp-android", version.ref = "ssp" }
+
+# --- PDF Tools ---
+pdfbox = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfbox" }
+androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

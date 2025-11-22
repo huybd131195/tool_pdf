@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">tool_pdf</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="text_to_pdf">Text to pdf</string>
+    <string name="smart_tools">Smart tool</string>
+    <string name="image_to_pdf">Image to PDF</string>
+    <string name="management_tools">Management tools</string>
+    <string name="lock_pdf">Lock PDF</string>
+    <string name="unlock_pdf">Unlock PDF</string>
+    <string name="edit_pdf">Edit PDF</string>
+    <string name="split_pdf">Split PDF</string>
+    <string name="merge_pdf">Merge PDF</string>
+    <string name="all_images">All Images</string>
+    <string name="import_images">Import</string>
+    <string name="selected_images">Selected Images</string>
+</resources>
