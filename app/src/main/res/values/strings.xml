@@ -13,4 +13,5 @@
     <string name="all_images">All Images</string>
     <string name="import_images">Import</string>
     <string name="selected_images">Selected Images</string>
+    <string name="select">Select</string>
 </resources>

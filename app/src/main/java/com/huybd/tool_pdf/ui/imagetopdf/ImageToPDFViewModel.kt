@@ -32,8 +32,18 @@ class ImageToPDFViewModel @Inject constructor(
     private val _selectedImages = MutableStateFlow<List<ImageModel>>(emptyList())
     val selectedImages = _selectedImages.asStateFlow()
 
+    private val _currentImageList = MutableStateFlow<List<ImageModel>>(emptyList())
+    val currentImageList = _currentImageList.asStateFlow()
+
+
     private val _currentFolderName = MutableStateFlow("All Images")
     val currentFolderName = _currentFolderName.asStateFlow()
+
+    private val _isPreviewMode = MutableStateFlow(false)
+    val isPreviewMode = _isPreviewMode.asStateFlow()
+
+    private val _previewPosition = MutableStateFlow(0)
+    val previewPosition = _previewPosition.asStateFlow()
 
     fun loadImages() {
         launchTask {
@@ -46,13 +56,21 @@ class ImageToPDFViewModel @Inject constructor(
 
     fun selectFolder(folder: ImageFolder) {
         _currentFolderName.value = folder.name
-        // Filter lại từ danh sách gốc
         val filtered = if (folder.id == "ALL") {
             originalAllImages
         } else {
             originalAllImages.filter { it.folderName == folder.name }
         }
         _uiImages.value = filtered
+    }
+
+    fun openPreview(position: Int) {
+        _previewPosition.value = position
+        _isPreviewMode.value = true
+    }
+
+    fun closePreview() {
+        _isPreviewMode.value = false
     }
 
     // SENIOR FIX: Xử lý Immutable State & Threading
@@ -62,7 +80,6 @@ class ImageToPDFViewModel @Inject constructor(
             val currentSelected = _selectedImages.value.toMutableList()
             val exists = currentSelected.any { it.id == image.id }
 
-            // 1. Cập nhật danh sách Selected
             if (exists) {
                 currentSelected.removeAll { it.id == image.id }
             } else {
@@ -70,13 +87,11 @@ class ImageToPDFViewModel @Inject constructor(
                 currentSelected.add(image.copy(isSelected = true))
             }
 
-            // Đánh lại số thứ tự (1, 2, 3...)
             val newSelectedList = currentSelected.mapIndexed { index, item ->
                 item.copy(selectionIndex = index + 1, isSelected = true)
             }
 
-            // 2. Map ngược trạng thái vào danh sách UI đang hiển thị
-            // Lưu ý: StateFlow value update thread-safe, nhưng ta chuẩn bị data xong mới set
+
             val currentUiList = _uiImages.value
             val newUiList = currentUiList.map { uiItem ->
                 val selectedItem = newSelectedList.find { it.id == uiItem.id }
@@ -87,7 +102,6 @@ class ImageToPDFViewModel @Inject constructor(
                 }
             }
 
-            // 3. Cập nhật cả list gốc (để khi đổi folder không mất tích xanh)
             originalAllImages = originalAllImages.map { originItem ->
                 val selectedItem = newSelectedList.find { it.id == originItem.id }
                 if (selectedItem != null) {
@@ -97,13 +111,11 @@ class ImageToPDFViewModel @Inject constructor(
                 }
             }
 
-            // 4. Update StateFlow (Main Thread sẽ nhận được update)
             _selectedImages.value = newSelectedList
             _uiImages.value = newUiList
         }
     }
 
-    // Logic fetch ảnh giữ nguyên (chỉ format lại xíu cho gọn)
     private suspend fun fetchImagesFromGallery(): Pair<List<ImageModel>, List<ImageFolder>> = withContext(Dispatchers.IO) {
         val imageList = mutableListOf<ImageModel>()
         val folderMap = mutableMapOf<String, ImageFolder>()

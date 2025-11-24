@@ -11,7 +11,8 @@ import com.huybd.tool_pdf.data.model.ImageModel
 import com.huybd.tool_pdf.databinding.ItemImageGridBinding
 
 class MainImageAdapter(
-    private val onImageClick: (ImageModel) -> Unit
+    private val onImageClick: (ImageModel) -> Unit,
+    private val onExpandClick: (Int) -> Unit
 ) : ListAdapter<ImageModel, MainImageAdapter.ImageViewHolder>(ImageDiffCallback()) {
 
     inner class ImageViewHolder(val binding: ItemImageGridBinding) :
@@ -19,12 +20,18 @@ class MainImageAdapter(
 
         init {
             binding.root.setOnClickListener {
-                // SỬA CHÍNH XÁC: Dùng bindingAdapterPosition (vì đã thêm thư viện mới)
                 val position = bindingAdapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onImageClick(getItem(position))
                 }
             }
+            binding.btnZoom.setOnClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onExpandClick(position) // Gọi callback mở slider
+                }
+            }
+
         }
 
         fun bind(item: ImageModel) {
