@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.huybd.tool_pdf.base.BaseViewModel
 import com.huybd.tool_pdf.data.model.ImageFolder
 import com.huybd.tool_pdf.data.model.ImageModel
+import com.huybd.tool_pdf.utils.PdfGenerator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,6 +37,9 @@ class ImageToPDFViewModel @Inject constructor(
     private val _currentImageList = MutableStateFlow<List<ImageModel>>(emptyList())
     val currentImageList = _currentImageList.asStateFlow()
 
+    val pdfFileResult = MutableStateFlow<File?>(null)
+
+    val isGenerating = MutableStateFlow(false)
 
     private val _currentFolderName = MutableStateFlow("All Images")
     val currentFolderName = _currentFolderName.asStateFlow()
@@ -73,7 +78,6 @@ class ImageToPDFViewModel @Inject constructor(
         _isPreviewMode.value = false
     }
 
-    // SENIOR FIX: Xử lý Immutable State & Threading
     fun toggleImageSelection(image: ImageModel) {
         // Đẩy việc tính toán list nặng ra khỏi Main Thread
         viewModelScope.launch(Dispatchers.Default) {
@@ -113,6 +117,29 @@ class ImageToPDFViewModel @Inject constructor(
 
             _selectedImages.value = newSelectedList
             _uiImages.value = newUiList
+        }
+    }
+
+    fun createPdfFromSelection() {
+        val selectedList = _selectedImages.value
+        if (selectedList.isEmpty()) return
+
+        isGenerating.value = true
+
+        viewModelScope.launch {
+            try {
+                val uris = selectedList.map { it.uri }
+                val fileName = "PDF_${System.currentTimeMillis()}"
+
+                val file = PdfGenerator.generatePdf(context, uris, fileName)
+
+                pdfFileResult.value = file
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isGenerating.value = false
+            }
         }
     }
 

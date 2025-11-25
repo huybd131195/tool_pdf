@@ -2,6 +2,7 @@ package com.huybd.tool_pdf.ui.imagetopdf
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -13,6 +14,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -32,6 +34,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import androidx.core.graphics.drawable.toDrawable
+import java.io.File
 
 @AndroidEntryPoint
 class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFViewModel>() {
@@ -73,6 +76,15 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
                 viewModel.closePreview()
             } else {
                 findNavController().popBackStack()
+            }
+        }
+
+        binding.bottomSheetLayout.btnImport.setOnClickListener {
+            val count = viewModel.selectedImages.value.size
+            if (count > 0) {
+                Toast.makeText(requireContext(), "Đang tạo PDF...", Toast.LENGTH_SHORT).show()
+
+                viewModel.createPdfFromSelection()
             }
         }
 
@@ -218,6 +230,31 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
                 binding.vpPreview.setCurrentItem(pos, false)
             }
         }
+        collectFlow(viewModel.pdfFileResult) { file ->
+            if (file != null) {
+                Toast.makeText(requireContext(), "Tạo PDF thành công: ${file.path}", Toast.LENGTH_LONG).show()
+
+                // TODO: Mở file PDF lên để xem
+                // openPdfFile(file)
+
+                // Reset trạng thái để không bị bắn lại khi xoay màn hình
+                viewModel.pdfFileResult.value = null
+            }
+        }
+
+        collectFlow(viewModel.pdfFileResult) { file ->
+            if (file != null) {
+                // Ẩn loading nếu cần
+                Toast.makeText(requireContext(), "Đã tạo xong!", Toast.LENGTH_SHORT).show()
+
+                // MỞ FILE NGAY
+                openPdfFile(file)
+
+                // Reset về null để tránh mở lại khi xoay màn hình
+                viewModel.pdfFileResult.value = null
+            }
+        }
+
     }
 
     @SuppressLint("SetTextI18n")
@@ -227,7 +264,6 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
         if (count > 0) {
             if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN ||
                 bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
-
                 bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
             }
         } else {
@@ -255,6 +291,30 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
     }
 
     override fun initData() {}
+
+    private fun openPdfFile(file: File) {
+        try {
+            // 1. Lấy Uri an toàn từ FileProvider
+            val uri = FileProvider.getUriForFile(
+                requireContext(),
+                "${requireContext().packageName}.provider",
+                file
+            )
+
+            // 2. Tạo Intent mở file
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(uri, "application/pdf")
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NO_HISTORY
+
+            // 3. Mở App đọc PDF (Google Drive, PDF Viewer, etc.)
+            val chooser = Intent.createChooser(intent, "Mở file PDF bằng")
+            startActivity(chooser)
+
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Không tìm thấy ứng dụng đọc PDF!", Toast.LENGTH_SHORT).show()
+            e.printStackTrace()
+        }
+    }
 }
 
 fun <T> Fragment.collectFlow(flow: Flow<T>, action: suspend (T) -> Unit) {
