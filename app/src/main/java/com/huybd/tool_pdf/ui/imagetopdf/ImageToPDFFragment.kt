@@ -126,19 +126,6 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
         bottomSheetBehavior.isHideable = true
 
-        // Nút Import
-        binding.bottomSheetLayout.btnImport.setOnClickListener {
-            val count = viewModel.selectedImages.value.size
-            if (count > 0) {
-                Toast.makeText(
-                    requireContext(),
-                    "Đã chọn $count ảnh -> Xử lý PDF",
-                    Toast.LENGTH_SHORT
-                ).show()
-                // TODO: Gọi hàm tạo PDF ở đây
-            }
-        }
-
         binding.bottomSheetLayout.imgArrowSheet.setOnClickListener {
             if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
                 bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
@@ -228,17 +215,6 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
         collectFlow(viewModel.previewPosition) { pos ->
             if (binding.vpPreview.currentItem != pos) {
                 binding.vpPreview.setCurrentItem(pos, false)
-            }
-        }
-        collectFlow(viewModel.pdfFileResult) { file ->
-            if (file != null) {
-                Toast.makeText(requireContext(), "Tạo PDF thành công: ${file.path}", Toast.LENGTH_LONG).show()
-
-                // TODO: Mở file PDF lên để xem
-                // openPdfFile(file)
-
-                // Reset trạng thái để không bị bắn lại khi xoay màn hình
-                viewModel.pdfFileResult.value = null
             }
         }
 
