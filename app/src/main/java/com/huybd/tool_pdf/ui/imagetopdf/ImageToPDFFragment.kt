@@ -154,6 +154,7 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
             // Callback để update icon arrow
             bottomSheetBehavior.addBottomSheetCallback(object :
                 BottomSheetBehavior.BottomSheetCallback() {
+                @SuppressLint("SwitchIntDef")
                 override fun onStateChanged(bottomSheet: View, newState: Int) {
                     try {
                         when (newState) {
