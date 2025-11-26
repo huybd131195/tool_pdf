@@ -89,9 +89,6 @@
         layout="@layout/bottom_sheet_image_picker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_anchorGravity="bottom"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-        app:behavior_hideable="true"
-        app:behavior_peekHeight="0dp" />
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

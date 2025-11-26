@@ -83,7 +83,6 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
             val count = viewModel.selectedImages.value.size
             if (count > 0) {
                 Toast.makeText(requireContext(), "Đang tạo PDF...", Toast.LENGTH_SHORT).show()
-
                 viewModel.createPdfFromSelection()
             }
         }
@@ -91,47 +90,101 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
         checkPermissionAndLoadData()
     }
 
-
     private fun setupAdapters() {
-        mainAdapter = MainImageAdapter(
-            onImageClick = { image -> viewModel.toggleImageSelection(image) },
-            onExpandClick = { position -> viewModel.openPreview(position) }
-        )
-        binding.rvImg.apply {
-            layoutManager = SquareGridLayoutManager(requireContext(), 3)
-            adapter = mainAdapter
-            itemAnimator = null
-        }
+        try {
+            mainAdapter = MainImageAdapter(
+                onImageClick = { image -> viewModel.toggleImageSelection(image) },
+                onExpandClick = { position -> viewModel.openPreview(position) }
+            )
+            binding.rvImg.apply {
+                layoutManager = SquareGridLayoutManager(requireContext(), 3)
+                adapter = mainAdapter
+                itemAnimator = null
+            }
 
-        previewAdapter = ImagePreviewAdapter { image ->
-            viewModel.toggleImageSelection(image)
-        }
-        binding.vpPreview.apply {
-            adapter = previewAdapter
-            offscreenPageLimit = 1
-        }
+            previewAdapter = ImagePreviewAdapter { image ->
+                viewModel.toggleImageSelection(image)
+            }
+            binding.vpPreview.apply {
+                adapter = previewAdapter
+                offscreenPageLimit = 1
+            }
 
-        selectedAdapter = SelectedImageAdapter { image ->
-            viewModel.toggleImageSelection(image)
-        }
-        binding.bottomSheetLayout.rvSelectedImg.apply {
-            layoutManager = GridLayoutManager(context, 3)
-            adapter = selectedAdapter
+            selectedAdapter = SelectedImageAdapter { image ->
+                viewModel.toggleImageSelection(image)
+            }
+            binding.bottomSheetLayout.rvSelectedImg.apply {
+                layoutManager = GridLayoutManager(context, 3)
+                adapter = selectedAdapter
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                requireContext(),
+                "Lỗi khởi tạo adapter: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
     private fun setupBottomSheet() {
-        val bottomSheet = binding.bottomSheetLayout.bottomSheetLayout
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
-        bottomSheetBehavior.isHideable = true
+        try {
+            val bottomSheet = binding.bottomSheetLayout.bottomSheetLayout
+            bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
 
-        binding.bottomSheetLayout.imgArrowSheet.setOnClickListener {
-            if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            } else if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            // Cấu hình ban đầu
+            bottomSheetBehavior.isHideable = true
+            bottomSheetBehavior.peekHeight = 0
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+
+            // Click arrow để toggle collapse/expand
+            binding.bottomSheetLayout.imgArrowSheet.setOnClickListener {
+                try {
+                    bottomSheetBehavior.state = when (bottomSheetBehavior.state) {
+                        BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+                        BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+                        BottomSheetBehavior.STATE_HIDDEN -> BottomSheetBehavior.STATE_COLLAPSED
+                        else -> BottomSheetBehavior.STATE_COLLAPSED
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
+
+            // Callback để update icon arrow
+            bottomSheetBehavior.addBottomSheetCallback(object :
+                BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(bottomSheet: View, newState: Int) {
+                    try {
+                        when (newState) {
+                            BottomSheetBehavior.STATE_EXPANDED -> {
+                                binding.bottomSheetLayout.imgArrowSheet.setImageResource(R.drawable.ic_arrow_drop_down)
+                            }
+
+                            BottomSheetBehavior.STATE_COLLAPSED -> {
+                                binding.bottomSheetLayout.imgArrowSheet.setImageResource(R.drawable.ic_arrow_drop_up)
+                            }
+
+                            BottomSheetBehavior.STATE_HIDDEN -> {
+                                binding.bottomSheetLayout.imgArrowSheet.setImageResource(R.drawable.ic_arrow_drop_up)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+                override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                    // Optional: Thêm animation cho arrow khi slide
+                }
+            })
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                requireContext(),
+                "Lỗi setup bottom sheet: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 
@@ -145,30 +198,33 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
 
     @SuppressLint("InflateParams")
     private fun showFolderPopup(anchorView: View) {
-        val popupView =
-            LayoutInflater.from(requireContext()).inflate(R.layout.layout_folder_popup, null)
-        val rvFolder = popupView.findViewById<RecyclerView>(R.id.rvFolderList)
+        try {
+            val popupView =
+                LayoutInflater.from(requireContext()).inflate(R.layout.layout_folder_popup, null)
+            val rvFolder = popupView.findViewById<RecyclerView>(R.id.rvFolderList)
 
-        val popupWindow = PopupWindow(
-            popupView,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-            true
-        )
-        popupWindow.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
-        popupWindow.elevation = 20f
+            val popupWindow = PopupWindow(
+                popupView,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                true
+            )
+            popupWindow.setBackgroundDrawable(Color.TRANSPARENT.toDrawable())
+            popupWindow.elevation = 20f
 
-        val folderAdapter = FolderAdapter(currentFolders) { selectedFolder ->
-            viewModel.selectFolder(selectedFolder)
-            binding.folderName.text = selectedFolder.name
-            popupWindow.dismiss()
+            val folderAdapter = FolderAdapter(currentFolders) { selectedFolder ->
+                viewModel.selectFolder(selectedFolder)
+                binding.folderName.text = selectedFolder.name
+                popupWindow.dismiss()
+            }
+
+            rvFolder.layoutManager = LinearLayoutManager(requireContext())
+            rvFolder.adapter = folderAdapter
+            popupWindow.showAsDropDown(anchorView, 0, 10)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
-
-        rvFolder.layoutManager = LinearLayoutManager(requireContext())
-        rvFolder.adapter = folderAdapter
-        popupWindow.showAsDropDown(anchorView, 0, 10)
     }
-
 
     private fun setupBackPressHandler() {
         requireActivity().onBackPressedDispatcher.addCallback(
@@ -179,25 +235,47 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
                         viewModel.closePreview()
                     } else {
                         isEnabled = false
-                        requireActivity().onBackPressedDispatcher.onBackPressed()                    }
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
                 }
             })
     }
 
-
     override fun observeData() {
+        // 1. Observe Images (Cập nhật Grid và Preview)
         collectFlow(viewModel.uiImages) { images ->
-            mainAdapter.submitList(images)
-            previewAdapter.submitList(images)
+            try {
+                if (::mainAdapter.isInitialized) {
+                    mainAdapter.submitList(images)
+                }
+                if (::previewAdapter.isInitialized) {
+                    previewAdapter.submitList(images)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
+        // 2. Observe Selected Images (Cập nhật Bottom Sheet)
         collectFlow(viewModel.selectedImages) { selected ->
-            selectedAdapter.submitList(selected) {
-                if (selected.isNotEmpty()) {
-                    binding.bottomSheetLayout.rvSelectedImg.smoothScrollToPosition(selected.size - 1)
+            try {
+                if (::selectedAdapter.isInitialized) {
+                    selectedAdapter.submitList(selected) {
+                        if (selected.isNotEmpty()) {
+                            try {
+                                binding.bottomSheetLayout.rvSelectedImg.smoothScrollToPosition(
+                                    selected.size - 1
+                                )
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
                 }
+                updateBottomSheetUI(selected.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            updateBottomSheetUI(selected.size)
         }
 
         // 3. Observe Folders (Cập nhật Menu Folder)
@@ -205,6 +283,7 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
             currentFolders = folders
         }
 
+        // 4. Observe Preview Mode
         collectFlow(viewModel.isPreviewMode) { isPreview ->
             binding.rvImg.isVisible = !isPreview
             binding.vpPreview.isVisible = isPreview
@@ -213,40 +292,54 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
 
         // 5. Observe Vị trí Preview (Sync Slider khi click từ Grid)
         collectFlow(viewModel.previewPosition) { pos ->
-            if (binding.vpPreview.currentItem != pos) {
-                binding.vpPreview.setCurrentItem(pos, false)
+            try {
+                if (binding.vpPreview.currentItem != pos) {
+                    binding.vpPreview.setCurrentItem(pos, false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
 
+        // 6. Observe PDF File Result
         collectFlow(viewModel.pdfFileResult) { file ->
             if (file != null) {
-                // Ẩn loading nếu cần
                 Toast.makeText(requireContext(), "Đã tạo xong!", Toast.LENGTH_SHORT).show()
-
-                // MỞ FILE NGAY
                 openPdfFile(file)
-
-                // Reset về null để tránh mở lại khi xoay màn hình
                 viewModel.pdfFileResult.value = null
             }
         }
-
     }
 
     @SuppressLint("SetTextI18n")
     private fun updateBottomSheetUI(count: Int) {
-        binding.bottomSheetLayout.btnImport.text = "Import ($count)"
+        try {
+            binding.bottomSheetLayout.btnImport.text = "Import ($count)"
 
-        if (count > 0) {
-            if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN ||
-                bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED) {
-                bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            if (count > 0) {
+                if (::bottomSheetBehavior.isInitialized) {
+                    if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_HIDDEN) {
+                        // Sử dụng giá trị dp được convert sang pixel
+                        val peekHeightInPx = (60 * resources.displayMetrics.density).toInt()
+                        bottomSheetBehavior.peekHeight = peekHeightInPx
+                        bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+                    }
+                }
+            } else {
+                if (::bottomSheetBehavior.isInitialized) {
+                    bottomSheetBehavior.peekHeight = 0
+                    bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+                }
             }
-        } else {
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                requireContext(),
+                "Lỗi cập nhật bottom sheet: ${e.message}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
-
 
     private fun checkPermissionAndLoadData() {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -287,7 +380,8 @@ class ImageToPDFFragment : BaseFragment<FragmentImageToPDFBinding, ImageToPDFVie
             startActivity(chooser)
 
         } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Không tìm thấy ứng dụng đọc PDF!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Không tìm thấy ứng dụng đọc PDF!", Toast.LENGTH_SHORT)
+                .show()
             e.printStackTrace()
         }
     }
